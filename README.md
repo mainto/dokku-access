@@ -1,4 +1,4 @@
-# dokku-userAccess [![Build Status](https://img.shields.io/travis/mainto/dokku-access.svg?branch=master "Build Status")](https://travis-ci.org/mainto/dokku-access)
+# dokku-access [![Build Status](https://img.shields.io/travis/mainto/dokku-access.svg?branch=master "Build Status")](https://travis-ci.org/mainto/dokku-access)
 
 *User Access Control for Dokku.* 
 
