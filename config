@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+export ACCESS_ROOT=${ACCESS_ROOT:="/var/lib/dokku/plugin/access"}
+export ACCESS_ADMIN_ROOT="$ACCESS_ROOT/admin"
+
+export PLUGIN_COMMAND_PREFIX="access"
+export PLUGIN_SERVICE="Access"
+export PLUGIN_DATA_ROOT=$ACCESS_ROOT
+
+export PLUGIN_BASE_PATH="$PLUGIN_PATH"
+if [[ -n $DOKKU_API_VERSION ]]; then
+  export PLUGIN_BASE_PATH="$PLUGIN_ENABLED_PATH"
+fi

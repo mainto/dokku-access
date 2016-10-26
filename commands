@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
+[[ " help $PLUGIN_COMMAND_PREFIX:help " == *" $1 "* ]] || [[ "$1" == "$PLUGIN_COMMAND_PREFIX:"* ]] || exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+if [[ ! -d $PLUGIN_DATA_ROOT ]]; then
+  dokku_log_fail "$PLUGIN_SERVICE: Please run: sudo dokku plugin:install"
+fi
+
+case "${1:-}" in
+  $PLUGIN_COMMAND_PREFIX:admin)
+		local ADMINS=$(ls "$ACCESS_ADMIN_ROOT" 2> /dev/null)
+	  if [[ -z $ADMINS ]]; then
+	    dokku_log_warn "There are no admins except 'admin'"
+	  else
+	    LIST="ADMINS\nadmin\n"
+	    for ADMIN in $ADMINS; do
+	      LIST+="$ADMIN\n"
+	    done
+	    printf "%b" "$LIST"
+	  fi
+    ;;
+  $PLUGIN_COMMAND_PREFIX:admin-add)
+    echo "admin-add"
+    ;;
+  $PLUGIN_COMMAND_PREFIX:admin-remove)
+    echo "admin-remove"
+    ;;
+  $PLUGIN_COMMAND_PREFIX:admin-removeAll)
+    echo "admin-removeAll"
+    ;;
+  $PLUGIN_COMMAND_PREFIX:git)
+    echo "git"
+    ;;
+  $PLUGIN_COMMAND_PREFIX:git-add)
+    echo "git-add"
+    ;;
+  $PLUGIN_COMMAND_PREFIX:git-remove)
+    echo "git-remove"
+    ;;
+  $PLUGIN_COMMAND_PREFIX:git-removeAll)
+    echo "git-removeAll"
+    ;;
+  help | $PLUGIN_COMMAND_PREFIX:help)
+	help_content_func() {
+		cat<<help_content
+		$PLUGIN_COMMAND_PREFIX:admin, Show list of admins with access to run all command
+		$PLUGIN_COMMAND_PREFIX:admin-add <user>, Allow users access to run all command
+		$PLUGIN_COMMAND_PREFIX:admin-remove <user>, Revoke users access to run all command
+		$PLUGIN_COMMAND_PREFIX:admin-removeAll, Revoke all users access to run all command
+		$PLUGIN_COMMAND_PREFIX:git <app>, Show list of users with access to app repository
+		$PLUGIN_COMMAND_PREFIX:git-add <app> <user>, Allow user access to the app repository
+		$PLUGIN_COMMAND_PREFIX:git-remove <app> <user>, Revoke users access to the app repository
+		$PLUGIN_COMMAND_PREFIX:git-removeAll <app>, Revoke all users access to the app repository
+help_content
+	}
+	if [[ $1 = "$PLUGIN_COMMAND_PREFIX:help" ]] ; then
+		echo -e "Usage: dokku $PLUGIN_COMMAND_PREFIX:[:COMMAND]"
+		echo ''
+		echo 'Commands:'
+		help_content_func | sort | column -c2 -t -s,
+	elif [[ $(ps -o command= $PPID) == *"--all"* ]]; then
+		help_content_func
+	else
+		cat<<help_desc
+    $PLUGIN_COMMAND_PREFIX, Plugin for adding user access control (Command permission, Git - push/pull for each App)
+help_desc
+	fi
+    ;;
+	*)
+		exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
+		;;
+esac
+
+
+

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+SSH_USER=$1
+SSH_NAME=$2
+DOKKU_COMMAND=$3
+APP=$4
+ACCESS_ADMIN="$ACCESS_ADMIN_ROOT/$SSH_NAME"
+
+
+shift 2
+if [[ "$SSH_USER" != "root" && "$SSH_NAME" != 'admin' ]]; then
+	if [[ -n "$SSH_NAME" ]]; then
+		exit 1;
+	fi
+	
+	#admin access check
+	if [[ -f "$ACCESS_ADMIN" ]]; then
+		exit 0;
+	fi
+	
+	#git access check
+	if [[ "$DOKKU_COMMAND" == "storage:list" || "$DOKKU_COMMAND" == "git-hook" || "$DOKKU_COMMAND" == "git-receive-pack" || "$DOKKU_COMMAND" == "git-upload-pack" ]]; then
+		ACCESS_GIT="$DOKKU_ROOT/$APP/access/$SSH_NAME"
+		if [[ -f "$ACCESS_GIT" ]]; then
+			exit 0;
+		fi
+	fi
+	
+	#no access
+	exit 1;
+fi
+exit 0;
+
