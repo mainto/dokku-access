@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export ACCESS_ROOT=${ACCESS_ROOT:="/var/lib/dokku/plugin/access"}
+export ACCESS_ROOT=${ACCESS_ROOT:="/var/lib/dokku/services/access"}
 export ACCESS_ADMIN_ROOT="$ACCESS_ROOT/admin"
 
 export PLUGIN_COMMAND_PREFIX="access"
