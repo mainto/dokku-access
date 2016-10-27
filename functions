@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_AVAILABLE_PATH/config/functions"
+
+
+access_check_user() {
+  USER=${1:-}
+  if [[ -z "$USER" ]]; then
+    dokku_log_fail "You must provide a user name!"
+  fi
+  
+  USER=${USER,,} #lowercase
+  if [[ "$USER" = "admin" || "$USER" = "root" ]]; then
+    dokku_log_fail "'$USER' is not allowed to modify"
+  fi
+}
+
+access_admin() {
+
+  if [[ ! -d "$ACCESS_ADMIN_ROOT" ]]; then
+    echo "There are no admins except 'admin'"
+    exit 0
+  fi
+  
+	ADMINS=$(ls "$ACCESS_ADMIN_ROOT" 2> /dev/null)
+  
+  if [[ -z $ADMINS ]]; then
+    echo "There are no admins except 'admin'"
+    exit 0
+  else
+    LIST="ADMIN LIST\nadmin\n"
+    for ADMIN in $ADMINS; do
+      LIST+="$ADMIN\n"
+    done
+    printf "%b" "$LIST"
+  fi
+}
+
+access_admin_add() {
+  access_check_user $1
+
+  [[ ! -d "$ACCESS_ADMIN_ROOT" ]] && mkdir "$ACCESS_ADMIN_ROOT"
+  
+  ACCESS_ADMIN_USER="$ACCESS_ADMIN_ROOT/"$(basename $USER)
+  if [[ -f "$ACCESS_ADMIN_USER" ]]; then
+    echo "User '$USER' already has access to run all command"
+    exit 1
+  fi
+  touch "$ACCESS_ADMIN_USER"
+  echo "User '$USER' has been granted to run all command"
+}
+
+access_admin_remove() {
+  access_check_user $1
+  
+  ACCESS_ADMIN_USER="$ACCESS_ADMIN_ROOT/"$(basename $USER)
+  if [[ ! -f "$ACCESS_ADMIN_USER" ]]; then
+    echo "User '$USER' is not exist in admin list"
+    exit 1
+  fi
+  [[ -f "$ACCESS_ADMIN_USER" ]] && rm "$ACCESS_ADMIN_USER";
+  [[ -d "$ACCESS_ADMIN_ROOT" ]] && [[ -z $(ls "$ACCESS_ADMIN_ROOT") ]] && rmdir "$ACCESS_ADMIN_ROOT";
+  echo "User '$USER' has been removed from admin list"
+}
+
+access_admin_remove_all() {
+  [[ -d "$ACCESS_ADMIN_ROOT" ]] && rm -rf "$ACCESS_ADMIN_ROOT";
+  echo "All users have been removed from admin list"
+}
+
+access_check_app() {
+  APP=${1:-}
+  if [[ -z "$APP" ]]; then
+    dokku_log_fail "You must provide an app name!"
+  fi
+  APP_ROOT="$DOKKU_ROOT/$APP"
+  if [[ ! -d "$APP_ROOT" ]]; then
+    dokku_log_fail "$APP is not exist!"
+  fi
+}
+
+access_git() {
+  access_check_app $1
+
+  ACCESS_GIT_ROOT="$APP_ROOT/access"
+  if [[ ! -d "$ACCESS_GIT_ROOT" ]]; then
+    echo "There is no users with access to '$APP' app repository"
+    exit 0
+  fi
+  
+  USERS=$(ls "$ACCESS_GIT_ROOT" 2> /dev/null)
+  if [[ -z $USERS ]]; then
+    echo "There is no users with access to '$APP' app repository"
+    exit 0
+  else
+    LIST="USER LIST\n"
+    for USER in $USERS; do
+      LIST+="$USER\n"
+    done
+    printf "%b" "$LIST"
+  fi
+}
+
+access_git_add() {
+  access_check_app $1
+  access_check_user $2
+
+  ACCESS_GIT_ROOT="$APP_ROOT/access"
+  [[ ! -d "$ACCESS_GIT_ROOT" ]] && mkdir "$ACCESS_GIT_ROOT"
+  
+  ACCESS_GIT_USER="$ACCESS_GIT_ROOT/"$(basename $USER)
+  if [[ -f "$ACCESS_GIT_USER" ]]; then
+    echo "User '$USER' already has access to '$APP' app repository"
+    exit 1
+  fi
+  touch "$ACCESS_GIT_USER"
+  echo "User '$USER' has been granted to access '$APP' app repository"
+}
+
+access_git_remove() {
+  access_check_app $1
+  access_check_user $2
+
+  ACCESS_GIT_ROOT="$APP_ROOT/access"
+  
+  ACCESS_GIT_USER="$ACCESS_GIT_ROOT/"$(basename $USER)
+  if [[ ! -f "$ACCESS_GIT_USER" ]]; then
+    echo "User '$USER' is not exist in '$APP' app access list"
+    exit 1
+  fi
+  [[ -f "$ACCESS_GIT_USER" ]] && rm "$ACCESS_GIT_USER";
+  [[ -d "$ACCESS_GIT_ROOT" ]] && [[ -z $(ls "$ACCESS_GIT_ROOT") ]] && rmdir "$ACCESS_GIT_ROOT";
+  echo "User '$USER' has been removed from '$APP' app access list"
+}
+
+access_git_remove_all() {
+  access_check_app $1
+
+  ACCESS_GIT_ROOT="$APP_ROOT/access"
+  
+  [[ -d "$ACCESS_GIT_ROOT" ]] && rm -rf "$ACCESS_GIT_ROOT";
+  echo "All users have been removed from '$APP' app access list"
+}

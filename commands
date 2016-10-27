@@ -3,43 +3,40 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
 [[ " help $PLUGIN_COMMAND_PREFIX:help " == *" $1 "* ]] || [[ "$1" == "$PLUGIN_COMMAND_PREFIX:"* ]] || exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
+source "$PLUGIN_BASE_PATH/common/functions"
+
 if [[ ! -d $PLUGIN_DATA_ROOT ]]; then
   dokku_log_fail "$PLUGIN_SERVICE: Please run: sudo dokku plugin:install"
 fi
 
-case "${1:-}" in
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/functions"
+
+COMMAND=${1:-}
+shift 1
+case "$COMMAND" in
   $PLUGIN_COMMAND_PREFIX:admin)
-		local ADMINS=$(ls "$ACCESS_ADMIN_ROOT" 2> /dev/null)
-	  if [[ -z $ADMINS ]]; then
-	    dokku_log_warn "There are no admins except 'admin'"
-	  else
-	    LIST="ADMINS\nadmin\n"
-	    for ADMIN in $ADMINS; do
-	      LIST+="$ADMIN\n"
-	    done
-	    printf "%b" "$LIST"
-	  fi
+		access_admin
     ;;
   $PLUGIN_COMMAND_PREFIX:admin-add)
-    echo "admin-add"
+    access_admin_add $@
     ;;
   $PLUGIN_COMMAND_PREFIX:admin-remove)
-    echo "admin-remove"
+    access_admin_remove $@
     ;;
   $PLUGIN_COMMAND_PREFIX:admin-removeAll)
-    echo "admin-removeAll"
+    access_admin_remove_all
     ;;
   $PLUGIN_COMMAND_PREFIX:git)
-    echo "git"
+    access_git $@
     ;;
   $PLUGIN_COMMAND_PREFIX:git-add)
-    echo "git-add"
+    access_git_add $@
     ;;
   $PLUGIN_COMMAND_PREFIX:git-remove)
-    echo "git-remove"
+    access_git_remove $@
     ;;
   $PLUGIN_COMMAND_PREFIX:git-removeAll)
-    echo "git-removeAll"
+    access_git_remove_all $@
     ;;
   help | $PLUGIN_COMMAND_PREFIX:help)
     help_content_func() {
@@ -54,11 +51,11 @@ case "${1:-}" in
     $PLUGIN_COMMAND_PREFIX:git-removeAll <app>, Revoke all users access to the app repository
 help_content
 	}
-	if [[ $1 = "$PLUGIN_COMMAND_PREFIX:help" ]] ; then
+	if [[ $COMMAND = "$PLUGIN_COMMAND_PREFIX:help" ]] ; then
 		echo -e "Usage: dokku $PLUGIN_COMMAND_PREFIX:[:COMMAND]"
 		echo ''
 		echo 'Commands:'
-		help_content_func | sort | column -c2 -t -s,
+		help_content_func | column -c2 -t -s,
 	elif [[ $(ps -o command= $PPID) == *"--all"* ]]; then
 		help_content_func
 	else

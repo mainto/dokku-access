@@ -4,6 +4,3 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 mkdir -p "$PLUGIN_DATA_ROOT" || echo "Failed to create $PLUGIN_SERVICE directory"
 chown dokku:dokku "$PLUGIN_DATA_ROOT"
-
-[ ! -d "$ACCESS_ADMIN_ROOT" ] && mkdir "$ACCESS_ADMIN_ROOT" || echo "Failed to create $PLUGIN_SERVICE data directory"
-chown dokku:dokku "$ACCESS_ADMIN_ROOT"
