@@ -8,10 +8,9 @@ DOKKU_COMMAND=$3
 APP=$4
 ACCESS_ADMIN="$ACCESS_ADMIN_ROOT/$SSH_NAME"
 
-
 shift 2
 if [[ "$SSH_USER" != "root" && "$SSH_NAME" != 'admin' ]]; then
-	if [[ -n "$SSH_NAME" ]]; then
+	if [[ ! -n "$SSH_NAME" ]]; then
 		exit 1;
 	fi
 	
